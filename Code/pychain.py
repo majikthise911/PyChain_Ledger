@@ -29,6 +29,7 @@ from typing import Any, List
 import datetime as datetime
 import pandas as pd
 import hashlib
+from numpy import record
 
 ################################################################################
 # Step 1:
@@ -72,8 +73,7 @@ class Block:
 
     # @TODO
     # Rename the `data` attribute to `record`, and set the data type to `Record`
-    data: Any
-    record: Record  
+    record: Record
     creator_id: int
     prev_hash: str = "0"
     timestamp: str = datetime.datetime.utcnow().strftime("%H:%M:%S")
@@ -81,19 +81,19 @@ class Block:
 
     def hash_block(self):
         sha = hashlib.sha256()
-
+        #record
         record = str(self.record).encode()
         sha.update(record)
-
+        #creator_id
         creator_id = str(self.creator_id).encode()
         sha.update(creator_id)
-
-        timestamp = str(self.timestamp).encode()
-        sha.update(timestamp)
-
+        #prev_hash
         prev_hash = str(self.prev_hash).encode()
         sha.update(prev_hash)
-
+        #timestamp
+        timestamp = str(self.timestamp).encode()
+        sha.update(timestamp)
+        #nonce
         nonce = str(self.nonce).encode()
         sha.update(nonce)
 
@@ -106,35 +106,36 @@ class PyChain:
     difficulty: int = 4
 
     def proof_of_work(self, block):
-
         calculated_hash = block.hash_block()
-
         num_of_zeros = "0" * self.difficulty
 
         while not calculated_hash.startswith(num_of_zeros):
-
-            block.nonce += 1
-
+            #nonce will keep counting until there is a winning hash
+            block.nonce +=1 
             calculated_hash = block.hash_block()
-
-        print("Wining Hash", calculated_hash)
+        
+        print("Winning Hash", calculated_hash)
         return block
-
+    
     def add_block(self, candidate_block):
         block = self.proof_of_work(candidate_block)
         self.chain += [block]
 
+    #Validation of the chain is done by the following function
+
     def is_valid(self):
-        block_hash = self.chain[0].hash_block()
+        
+        block_hash = self.chain[0].hash_block() #hash the first block in the chain  
 
-        for block in self.chain[1:]:
-            if block_hash != block.prev_hash:
-                print("Blockchain is invalid!")
+        for block in self.chain[1:]: #the remainder of the blocks in the chain, starting from index 1
+            
+            if block_hash != block.prev_hash:  
+                print("Blockchain is invalid")
                 return False
-
+            
             block_hash = block.hash_block()
-
-        print("Blockchain is Valid")
+        
+        print("Blockchain is valid")
         return True
 
 ################################################################################
@@ -142,8 +143,7 @@ class PyChain:
 
 # Adds the cache decorator for Streamlit
 
-
-@st.cache(allow_output_mutation=True)
+@st.cache(allow_output_mutation=True) 
 def setup():
     print("Initializing Chain")
     return PyChain([Block("Genesis", 0)])
@@ -170,9 +170,8 @@ pychain = setup()
 
 # @TODO:
 # Delete the `input_data` variable from the Streamlit interface.
-input_data = st.text_input("Block Data")
-
-# @TODO:
+# 
+# # @TODO:
 # Add an input area where you can get a value for `sender` from the user.
 sender = st.text_input("Sender Info")
 
@@ -192,18 +191,14 @@ if st.button("Add Block"):
     # Update `new_block` so that `Block` consists of an attribute named `record`
     # which is set equal to a `Record` that contains the `sender`, `receiver`,
     # and `amount` values
-    record = Record(
+    new_block = Block(
+        record = Record,
         creator_id=42,
-        data=input_data,
-        sender=sender,
-        receiver=receiver,
-        amount=amount,
         prev_hash=prev_block_hash
     )
 
-    pychain.add_block(record)
+    pychain.add_block(new_block)
     st.balloons()
-
 ################################################################################
 # Streamlit Code (continues)
 
